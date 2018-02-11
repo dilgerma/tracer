@@ -93,6 +93,7 @@ public class InfluxTraceCollector implements TraceCollector, TraceReporter {
         tracePoint.tag("traceRequestType", trace
                 .getTraceRequestType()
                 .getTraceRequestType());
+        tracePoint.tag("traceIdTag", trace.getTraceId());
 
         tags(tracePoint, tagProviders);
         fields(tracePoint, fieldProviders);
