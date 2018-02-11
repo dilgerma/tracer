@@ -2,13 +2,12 @@ package de.effectivetrainings.observed.model;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import de.effectivetrainings.observed.impl.TracerContextProvider;
 import lombok.Getter;
 
 @Getter
 public class TracerContext {
 
-    private String source;
+    private String origSource;
     private String correlationId;
     private String reporter;
     private int hops;
@@ -16,8 +15,8 @@ public class TracerContext {
 
     private Timer timer = new Timer();
 
-    public TracerContext(String source, String reporter, String correlationId, int hops, Multimap<String, String> headers) {
-        this.source = source;
+    public TracerContext(String origSource, String reporter, String correlationId, int hops, Multimap<String, String> headers) {
+        this.origSource = origSource;
         this.correlationId = correlationId;
         this.reporter = reporter;
         this.hops = hops;
@@ -29,8 +28,4 @@ public class TracerContext {
         return this;
     }
 
-    public TracerContext forSource(String source) {
-        this.headers.put(TracerContextProvider.X_SOURCE, source);
-        return this;
-    }
 }

@@ -1,11 +1,15 @@
 package de.effectivetrainings.observed.model;
 
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
 @Builder
-public class Trace {
+@ToString
+@EqualsAndHashCode
+public class RequestTrace {
     protected String id;
     protected String traceId;
     protected String source;

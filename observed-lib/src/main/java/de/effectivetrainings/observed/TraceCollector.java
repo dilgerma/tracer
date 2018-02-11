@@ -1,10 +1,10 @@
 package de.effectivetrainings.observed;
 
 
-import de.effectivetrainings.observed.model.Trace;
+import de.effectivetrainings.observed.model.RequestTrace;
 
 public interface TraceCollector {
 
-    void collect(Trace trace);
+    void collect(RequestTrace requestTrace);
 
 }

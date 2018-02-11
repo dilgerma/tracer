@@ -30,6 +30,11 @@
             <artifactId>opentracing-api</artifactId>
             <version>0.31.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+
     </dependencies>
 
 

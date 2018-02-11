@@ -23,13 +23,24 @@ public class TracerClientHttpInterceptor implements ClientHttpRequestInterceptor
 
     @Override
     public ClientHttpResponse intercept(HttpRequest httpRequest, byte[] bytes, ClientHttpRequestExecution clientHttpRequestExecution) throws IOException {
-
         final TracerContext context = tracerContextProvider.provide(Headers.of(httpRequest
                 .getHeaders()
                 .toSingleValueMap()));
-        tracerRequestLifeCycle.beforeRequest(context);
-        ClientHttpResponse response = clientHttpRequestExecution.execute(httpRequest, bytes);
-        tracerRequestLifeCycle.afterRequest(context);
-        return response;
+        try {
+
+            tracerRequestLifeCycle.beforeRequest(context);
+
+            context
+                    .getHeaders()
+                    .entries().stream().forEach(entry -> httpRequest.getHeaders().add(entry.getKey(), entry.getValue()));
+
+            ClientHttpResponse response = clientHttpRequestExecution.execute(httpRequest, bytes);
+
+            tracerRequestLifeCycle.afterRequest(context);
+            return response;
+        } catch (Exception e) {
+            tracerRequestLifeCycle.onError(context);
+            throw e;
+        }
     }
 }

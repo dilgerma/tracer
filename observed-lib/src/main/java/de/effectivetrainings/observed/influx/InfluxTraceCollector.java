@@ -4,7 +4,7 @@ import de.effectivetrainings.observed.FieldProvider;
 import de.effectivetrainings.observed.TagProvider;
 import de.effectivetrainings.observed.TraceCollector;
 import de.effectivetrainings.observed.TraceReporter;
-import de.effectivetrainings.observed.model.Trace;
+import de.effectivetrainings.observed.model.RequestTrace;
 import okhttp3.OkHttpClient;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
@@ -27,7 +27,7 @@ public class InfluxTraceCollector implements TraceCollector, TraceReporter {
     private List<TagProvider> tagProviders;
     private List<FieldProvider> fieldProviders;
 
-    private List<Trace> traces = Collections.synchronizedList(new ArrayList<>());
+    private List<RequestTrace> requestTraces = Collections.synchronizedList(new ArrayList<>());
 
     public InfluxTraceCollector(InfluxConnection influxConnection, OkHttpClient.Builder clientBuilder, List<FieldProvider> fieldProviders, List<TagProvider> tagProviders) {
         this.tagProviders = tagProviders != null ? tagProviders : Collections.emptyList();
@@ -38,16 +38,16 @@ public class InfluxTraceCollector implements TraceCollector, TraceReporter {
     }
 
     @Override
-    public void collect(Trace trace) {
-        traces.add(trace);
+    public void collect(RequestTrace requestTrace) {
+        requestTraces.add(requestTrace);
     }
 
     @Override
     public void report() {
-        List<Trace> collectedTraces;
-        synchronized (traces) {
-            collectedTraces = new ArrayList<>(traces);
-            traces.clear();
+        List<RequestTrace> collectedRequestTraces;
+        synchronized (requestTraces) {
+            collectedRequestTraces = new ArrayList<>(requestTraces);
+            requestTraces.clear();
         }
 
         if (!influxDB
@@ -58,7 +58,7 @@ public class InfluxTraceCollector implements TraceCollector, TraceReporter {
 
         BatchPoints.Builder batchPoints = BatchPoints.database(influxConnection.getDatabase());
 
-        collectedTraces
+        collectedRequestTraces
                 .stream()
                 .forEach((trace) -> {
 
@@ -70,35 +70,35 @@ public class InfluxTraceCollector implements TraceCollector, TraceReporter {
         influxDB.write(batchPoints.build());
     }
 
-    private Point.Builder handle(Point.Builder tracePoint, Trace trace) {
-        tracePoint.addField("traceId", trace.getTraceId());
-        tracePoint.addField("host", trace.getHost());
-        tracePoint.addField("hops", trace.getHops());
-        tracePoint.addField("target", trace.getTarget() != null ? trace.getTarget() : "unknown");
-        tracePoint.addField("source", trace.getSource() != null ? trace.getSource() : "unknown");
-        tracePoint.addField("duration", trace.getDuration());
+    private Point.Builder handle(Point.Builder tracePoint, RequestTrace requestTrace) {
+        tracePoint.addField("traceId", requestTrace.getTraceId());
+        tracePoint.addField("host", requestTrace.getHost());
+        tracePoint.addField("hops", requestTrace.getHops());
+        tracePoint.addField("target", requestTrace.getTarget() != null ? requestTrace.getTarget() : "unknown");
+        tracePoint.addField("source", requestTrace.getSource() != null ? requestTrace.getSource() : "unknown");
+        tracePoint.addField("duration", requestTrace.getDuration());
 
-        tracePoint.tag("hostTag", trace.getHost());
-        if (trace.getSource() != null && !"unknown".equals(trace.getSource())) {
-            tracePoint.tag("sourceTag", trace.getSource());
+        tracePoint.tag("hostTag", requestTrace.getHost());
+        if (requestTrace.getSource() != null && !"unknown".equals(requestTrace.getSource())) {
+            tracePoint.tag("sourceTag", requestTrace.getSource());
         }
-        if(trace.getTarget() != null && !"unknown".equals(trace.getTarget())) {
-            tracePoint.tag("targetTag", trace.getTarget());
+        if(requestTrace.getTarget() != null && !"unknown".equals(requestTrace.getTarget())) {
+            tracePoint.tag("targetTag", requestTrace.getTarget());
         }
-        tracePoint.tag("environment", trace.getEnvironment());
-        tracePoint.tag("reporter", trace.getReporter());
-        tracePoint.tag("type", trace
+        tracePoint.tag("environment", requestTrace.getEnvironment());
+        tracePoint.tag("reporter", requestTrace.getReporter());
+        tracePoint.tag("type", requestTrace
                 .getTraceType()
                 .getType());
-        tracePoint.tag("traceRequestType", trace
+        tracePoint.tag("traceRequestType", requestTrace
                 .getTraceRequestType()
                 .getTraceRequestType());
-        tracePoint.tag("traceIdTag", trace.getTraceId());
+        tracePoint.tag("traceIdTag", requestTrace.getTraceId());
 
         tags(tracePoint, tagProviders);
         fields(tracePoint, fieldProviders);
 
-        tracePoint.time(trace.getTimeStamp(), TimeUnit.MILLISECONDS);
+        tracePoint.time(requestTrace.getTimeStamp(), TimeUnit.MILLISECONDS);
         return tracePoint;
     }
 
